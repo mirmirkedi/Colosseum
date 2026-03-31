@@ -1,16 +1,29 @@
 #! /bin/bash
 
+set -e
+
 RPC_VERSION_FOLDER="rpclib-2.3.0"
 folder_name="Release"
 build_dir=build
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    CC_BIN="$(xcrun --find clang)"
+    CXX_BIN="$(xcrun --find clang++)"
+    JOBS="$(sysctl -n hw.ncpu)"
+    CMAKE_CXX_FLAGS="-stdlib=libc++"
+else
+    CC_BIN="${CC:-clang}"
+    CXX_BIN="${CXX:-clang++}"
+    JOBS="$(nproc)"
+    CMAKE_CXX_FLAGS="-stdlib=libc++ -I/usr/lib/llvm-17/include/c++/v1~"
+fi
 
 mkdir -p build
 cd build
 
-CC=/usr/bin/clang-18 CXX=/usr/bin/clang++-18 cmake ../cmake -DCMAKE_CXX_FLAGS='-stdlib=libc++ -I/usr/lib/llvm-17/include/c++/v1~'
+CC="$CC_BIN" CXX="$CXX_BIN" cmake ../cmake -DCMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
-make -j$(nproc)
+make -j"$JOBS"
 
 cd ..
 
